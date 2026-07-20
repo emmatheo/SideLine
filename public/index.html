@@ -133,6 +133,25 @@ pre{background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:12px;pa
 #out{white-space:pre-wrap;color:#EFD9B4;max-height:340px;overflow:auto;line-height:1.6}
 .s402{color:var(--amber)}.s200{color:var(--grn)}
 footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-family:var(--m);text-align:center}
+/* ---------- newcomer / judge walkthrough ---------- */
+.lead{color:var(--mut);font-size:13.5px;line-height:1.7;margin:2px 0 16px;max-width:64ch}
+.guide{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:820px){.guide{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.guide{grid-template-columns:1fr}}
+.step{padding:18px}
+.step .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;
+ background:rgba(232,179,107,.14);border:1px solid var(--amber);color:var(--amber);font-family:var(--m);font-size:13px;font-weight:700}
+.step h4{font-size:14px;font-weight:700;margin-top:12px}
+.step h4 em{color:var(--amber);font-style:normal}
+.step p{color:var(--mut);font-size:12px;line-height:1.6;margin-top:7px}
+.step code{font-family:var(--m);font-size:11px;color:#EFD9B4;background:rgba(0,0,0,.4);border-radius:5px;padding:1px 5px}
+.cta2{display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:var(--amber);color:#0B0906;border-radius:99px;
+ padding:13px 26px;font-weight:600;font-size:14px;text-decoration:none;cursor:pointer;border:none;font-family:var(--f)}
+.cta2:disabled{opacity:.5;cursor:default}
+.walkcap{margin:0 0 12px;padding:11px 14px;border-left:2px solid var(--amber);background:rgba(232,179,107,.06);
+ color:var(--txt);font-size:12.5px;line-height:1.6;border-radius:0 8px 8px 0;display:none}
+.walkcap.on{display:block}
+.walkcap b{color:var(--amber)}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -146,6 +165,7 @@ footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-fami
     <div class="mark"></div>
     <div class="navpill">
       <a class="on" href="#top">Start</a>
+      <a href="#guide">Guide</a>
       <a href="#board">Live Board</a>
       <a href="#doors">MCP</a>
       <a href="#console">x402 API</a>
@@ -193,6 +213,34 @@ footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-fami
   </div>
 </div></div>
 
+<div class="wrap" style="padding-bottom:0">
+  <h2 id="guide">New here? What you're looking at</h2>
+  <p class="lead">SIDELINE is <b style="color:var(--txt)">one small server with two doors onto the live World Cup</b> — one for AI assistants, one for developers and agents — and <b style="color:var(--txt)">it needs no API key from anyone</b>. Here's the whole idea in four steps. Then press the button to watch it happen for real, on live data.</p>
+  <div class="guide">
+    <div class="gl step">
+      <span class="num">1</span>
+      <h4>The wall</h4>
+      <p>AI assistants are blind to the world's biggest live event, and every sports API demands a signup, a key, and a season-long subscription. An autonomous agent can't even fill in the form.</p>
+    </div>
+    <div class="gl step">
+      <span class="num">2</span>
+      <h4>Free data, <em>zero keys</em></h4>
+      <p>Anyone — human or AI — reads live scores &amp; fixtures for free. Devs call <code>/matches</code> and <code>/live</code>; AIs call the MCP tool <code>get_live_scores</code>. No account, no key.</p>
+    </div>
+    <div class="gl step">
+      <span class="num">3</span>
+      <h4>The paywall <em>is</em> x402</h4>
+      <p>Ask for a premium brief and you get back <code>HTTP 402</code> with the exact price. No login screen — <b style="color:var(--txt)">the payment itself is the authentication</b>. That's the x402 standard.</p>
+    </div>
+    <div class="gl step">
+      <span class="num">4</span>
+      <h4>Pay → unlock</h4>
+      <p>Send the payment, get the data plus a reusable token. An AI can do this loop by itself — discover a match, hit the 402, pay, read the brief. That's the business model.</p>
+    </div>
+  </div>
+  <button class="cta2" id="walkBtn">▶ Walk me through it — 10s live demo</button>
+</div>
+
 <div class="wrap">
   <h2 id="board">Live board — straight from the feed</h2>
   <div class="gl ticker" id="ticker"><div class="match"><span style="color:var(--mut)">loading live data…</span></div></div>
@@ -228,6 +276,7 @@ curl -H "X-PAYMENT: &lt;auth&gt;" …/brief/ID  # -> 200</pre>
       <button class="btn" id="b402">GET /premium/brief (no payment)</button>
       <button class="btn pay" id="bPay">↻ retry WITH payment</button>
     </div>
+    <div class="walkcap" id="walkcap"></div>
     <div id="out">// click a button — real responses from this server, live</div>
   </div>
 
@@ -260,14 +309,33 @@ async function tick(){
 }
 tick();setInterval(tick,30000);
 function log(t){$("#out").innerHTML=t;}
-$("#bFree").onclick=async()=>{const r=await fetch("/matches");const j=await r.json();
-  log(`GET /matches\n<span class="s200">HTTP ${r.status} OK</span> — ${j.length} matches, no key needed\n\n`+esc(JSON.stringify(j.slice(0,2),null,2))+"\n…");};
-$("#b402").onclick=async()=>{if(!firstId)return log("no match id yet — wait for the board");
+async function runFree(){const r=await fetch("/matches");const j=await r.json();
+  log(`GET /matches\n<span class="s200">HTTP ${r.status} OK</span> — ${j.length} matches, no key needed\n\n`+esc(JSON.stringify(j.slice(0,2),null,2))+"\n…");}
+async function run402(){if(!firstId)return log("no match id yet — wait for the board");
   const r=await fetch(`/premium/brief/${firstId}`);const j=await r.json();
-  log(`GET /premium/brief/${firstId}\n<span class="s402">HTTP ${r.status} Payment Required</span> — the price IS the auth\n\n`+esc(JSON.stringify(j,null,2)));};
-$("#bPay").onclick=async()=>{if(!firstId)return log("no match id yet");
+  log(`GET /premium/brief/${firstId}\n<span class="s402">HTTP ${r.status} Payment Required</span> — the price IS the auth\n\n`+esc(JSON.stringify(j,null,2)));}
+async function runPay(){if(!firstId)return log("no match id yet");
   const r=await fetch(`/premium/brief/${firstId}`,{headers:{"X-PAYMENT":"demo-eip3009-authorization"}});const j=await r.json();
-  log(`GET /premium/brief/${firstId}  (X-PAYMENT: &lt;signed auth&gt;)\n<span class="s200">HTTP ${r.status} OK — settled, content unlocked</span>\n\n`+esc(JSON.stringify(j,null,2)));};
+  log(`GET /premium/brief/${firstId}  (X-PAYMENT: &lt;signed auth&gt;)\n<span class="s200">HTTP ${r.status} OK — settled, content unlocked</span>\n\n`+esc(JSON.stringify(j,null,2)));}
+$("#bFree").onclick=runFree;$("#b402").onclick=run402;$("#bPay").onclick=runPay;
+
+/* Guided walkthrough — auto-plays the free -> 402 -> paid story with captions,
+   so a first-time visitor or judge understands the product without reading docs. */
+const cap=$("#walkcap"),wb=$("#walkBtn"),wait=ms=>new Promise(r=>setTimeout(r,ms));
+function say(html){cap.classList.add("on");cap.innerHTML=html;}
+async function walk(){
+  wb.disabled=true;const label=wb.textContent;wb.textContent="… playing the live demo";
+  $("#console").scrollIntoView({behavior:"smooth"});await wait(700);
+  say(`<b>Step 1 — free data, no key.</b> Reading live World Cup matches. Anyone can; an AI calls the same thing through the <code>get_live_scores</code> MCP tool.`);
+  await runFree();await wait(3400);
+  say(`<b>Step 2 — hit the paywall.</b> Now we ask for a <b>premium</b> brief with no payment. The server answers <b>HTTP 402</b> and hands back the exact price. No login screen — the payment is the auth.`);
+  await run402();await wait(3800);
+  say(`<b>Step 3 — pay &amp; unlock.</b> Same request, now carrying an <code>X-PAYMENT</code> header. <b>HTTP 200</b> — the brief unlocks and a reusable token comes back. An agent runs this whole loop on its own.`);
+  await runPay();await wait(2800);
+  say(`✅ <b>That's SIDELINE.</b> Free live data for everyone, and half-a-cent pay-per-call premium where the payment <i>is</i> the account — for humans and AIs alike. No keys, ever.`);
+  wb.disabled=false;wb.textContent=label;
+}
+wb.onclick=walk;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 </script>
 </body>
