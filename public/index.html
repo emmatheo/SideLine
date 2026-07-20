@@ -152,7 +152,34 @@ footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-fami
  color:var(--txt);font-size:12.5px;line-height:1.6;border-radius:0 8px 8px 0;display:none}
 .walkcap.on{display:block}
 .walkcap b{color:var(--amber)}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* ---------- always-on animated explainer (plays like a video, no backend) ---------- */
+.player{margin:18px 0 8px;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+ background:rgba(8,6,4,.72);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.pbar{display:flex;align-items:center;gap:7px;padding:11px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--line)}
+.pbar .d{width:11px;height:11px;border-radius:50%}
+.pbar .d.r{background:#E5344A}.pbar .d.y{background:#E8B36B}.pbar .d.g{background:#7CE3A8}
+.pbar .ptitle{margin-left:8px;font-family:var(--m);font-size:11px;color:var(--mut)}
+.pbar .plive{margin-left:auto;font-family:var(--m);font-size:10px;letter-spacing:1px;color:var(--grn)}
+.stage{padding:22px 20px;min-height:180px}
+.player .cap{font-size:14px;line-height:1.55;color:var(--txt);min-height:42px;transition:opacity .35s}
+.player .cap b{color:var(--amber)}
+.player .term{margin-top:14px;font-family:var(--m);font-size:12.5px;line-height:1.75;color:#EFD9B4;
+ white-space:pre-wrap;transition:opacity .35s}
+.player .term .k402{color:var(--amber);font-weight:700}
+.player .term .k200{color:var(--grn);font-weight:700}
+.player .term .dim{color:var(--mut)}
+.player .term .coin{color:var(--amber)}
+.player.fade .cap,.player.fade .term{opacity:0}
+.track{height:3px;background:rgba(255,255,255,.07)}
+.track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),#FFF6E8);transition:width .5s linear}
+.dots{display:flex;gap:6px;justify-content:center;padding:12px 0 14px}
+.dots b{width:22px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);transition:background .3s}
+.dots b.on{background:var(--amber)}
+.demolabel{display:inline-flex;align-items:center;gap:8px;font-family:var(--m);font-size:11px;color:var(--mut);margin-bottom:2px}
+.demolabel .rec{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.cta.alt{background:transparent;color:var(--txt);border:1px solid var(--line);box-shadow:none;margin-left:10px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.pbar .plive{color:var(--mut)}}
 </style>
 </head>
 <body>
@@ -187,7 +214,8 @@ footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-fami
     <a class="joinpill" href="#doors"><i>✦</i> Join the keyless world <span style="opacity:.7">→</span></a>
     <h1>Sideline Odyssey<br>Sailing The Seas Of Live Data</h1>
     <div class="sub">Live World Cup data for AIs, agents and developers — no accounts, no API keys, ever.</div>
-    <a class="cta" href="#console">Discover The Console</a>
+    <a class="cta" href="#demo">▶ Watch the 10-second explainer</a>
+    <a class="cta alt" href="#console">Open the console</a>
   </div>
 
   <div class="panels">
@@ -216,7 +244,21 @@ footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-fami
 
 <div class="wrap" style="padding-bottom:0">
   <h2 id="guide">New here? What you're looking at</h2>
-  <p class="lead">SIDELINE is <b style="color:var(--txt)">one small server with two doors onto the live World Cup</b> — one for AI assistants, one for developers and agents — and <b style="color:var(--txt)">it needs no API key from anyone</b>. Here's the whole idea in four steps. Then press the button to watch it happen for real, on live data.</p>
+  <p class="lead">SIDELINE is <b style="color:var(--txt)">one small server with two doors onto the live World Cup</b> — one for AI assistants, one for developers and agents — and <b style="color:var(--txt)">it needs no API key from anyone</b>. Watch the loop below, then read the four steps.</p>
+  <div class="demolabel" id="demo"><span class="rec"></span> AUTO-PLAYING EXPLAINER — the whole product in one loop</div>
+  <div class="player">
+    <div class="pbar">
+      <span class="d r"></span><span class="d y"></span><span class="d g"></span>
+      <span class="ptitle">SIDELINE — how an AI pays for live data with x402</span>
+      <span class="plive" id="pLive">● PLAYING</span>
+    </div>
+    <div class="stage">
+      <div class="cap" id="pCap">Loading…</div>
+      <div class="term" id="pTerm"></div>
+    </div>
+    <div class="track"><i id="pFill"></i></div>
+    <div class="dots" id="pDots"><b></b><b></b><b></b><b></b></div>
+  </div>
   <div class="guide">
     <div class="gl step">
       <span class="num">1</span>
@@ -350,6 +392,30 @@ async function walk(){
   wb.disabled=false;wb.textContent=label;
 }
 wb.onclick=walk;
+
+/* Always-on animated explainer — a looping, video-like walkthrough of the x402
+   loop that needs no backend, so it plays even on a cold or static deploy. */
+const steps=[
+  {cap:`<b>1 · An AI asks for data.</b> No signup, no key — it just calls the endpoint.`,
+   term:`<span class="dim">agent →</span> GET /premium/brief/42`},
+  {cap:`<b>2 · The server replies 402.</b> No login screen — the payment itself is the authentication.`,
+   term:`<span class="k402">HTTP 402 Payment Required</span>\n<span class="dim">accepts:</span> [{ asset: USDC, price: <span class="coin">0.005</span>, payTo: 0x…, resource: /premium/brief/42 }]`},
+  {cap:`<b>3 · The agent pays inline.</b> Half a cent, sent right in the retry — no account, no invoice.`,
+   term:`<span class="dim">agent →</span> GET /premium/brief/42\n<span class="coin">X-PAYMENT:</span> <span class="dim">signed authorization ✎</span>`},
+  {cap:`<b>4 · Data unlocked.</b> An AI just bought live World Cup data by itself — that's the whole product.`,
+   term:`<span class="k200">HTTP 200 OK</span>   <span class="dim">X-PAYMENT-RESPONSE: settled ✓</span>\n{ match: "Brazil vs France", status: "live", score: "1–1", brief: "…" }`},
+];
+const player=document.querySelector(".player"),pCap=$("#pCap"),pTerm=$("#pTerm"),pFill=$("#pFill"),
+      pDots=[...document.querySelectorAll("#pDots b")];let si=0;
+function renderStep(i){pCap.innerHTML=steps[i].cap;pTerm.innerHTML=steps[i].term;
+  pFill.style.width=((i+1)*25)+"%";pDots.forEach((d,k)=>d.classList.toggle("on",k===i));}
+function nextStep(){player.classList.add("fade");
+  setTimeout(()=>{si=(si+1)%steps.length;
+    if(si===0){pFill.style.transition="none";pFill.style.width="0%";void pFill.offsetWidth;pFill.style.transition="";}
+    renderStep(si);player.classList.remove("fade");},360);}
+renderStep(0);
+if(!matchMedia("(prefers-reduced-motion:reduce)").matches)setInterval(nextStep,2800);
+
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 </script>
 </body>
