@@ -12,6 +12,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { Engine } from "./engine.js";
+import { verifyToken } from "./token.js";
 
 const engine = new Engine();
 let lastRefresh = 0;
@@ -66,11 +67,21 @@ server.tool(
           how: "GET the HTTP gateway /premium/brief/{id} to complete the x402 handshake and receive a token." }],
       }, null, 2) }] };
     }
+    // Validate the token was issued by the gateway for THIS match and hasn't
+    // expired — a settled x402 payment, not just any non-empty string.
+    const check = verifyToken(payment_token, match_id);
+    if (!check.ok) {
+      return { content: [{ type: "text", text: JSON.stringify({
+        status: 402, error: "Invalid payment token", reason: check.reason,
+        how: "Complete the x402 handshake at the HTTP gateway /premium/brief/{id} to receive a valid token.",
+      }, null, 2) }] };
+    }
     await fresh();
     const m = engine.matches.get(match_id);
     if (!m) return { content: [{ type: "text", text: JSON.stringify({ error: "unknown match id" }) }] };
     return { content: [{ type: "text", text: JSON.stringify({
-      paid: true, match: `${m.home} vs ${m.away}`, stage: m.stage ?? null,
+      paid: true, settlement_tx: check.data?.tx ?? null,
+      match: `${m.home} vs ${m.away}`, stage: m.stage ?? null,
       kickoff: m.kickoff, status: m.status, score: m.homeScore != null ? `${m.homeScore}-${m.awayScore}` : null,
       brief: `Verified live feed context for ${m.home} vs ${m.away}: status=${m.status}. This slot is where deeper paid analytics ship next (odds-implied probabilities, form context).`,
     }, null, 2) }] };

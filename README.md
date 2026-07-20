@@ -24,10 +24,21 @@ match. Agents can't even fill in the signup form.
 | Technology | Where | How |
 |---|---|---|
 | **MCP Server** | `src/mcp.ts` | **Core product.** A real Model Context Protocol server (official TypeScript SDK, stdio transport) exposing 4 live tools any AI can call. The premium tool returns the x402 payment contract when unpaid — agents learn to pay. |
-| **x402** | `src/server.ts` `/premium/brief/:id` | **The business model.** Full 402 handshake in spec shape: unpaid → 402 + `accepts[]` (scheme, asset USDC, amount, payTo, resource); paid → 200 + `X-PAYMENT-RESPONSE`. Facilitator/relayer settlement is the marked integration point; payment tokens bridge HTTP payments to MCP tool calls. |
+| **x402** | `src/server.ts` + `src/x402.ts` | **The business model.** Full 402 handshake in spec shape (unpaid → 402 + `accepts[]`; paid → 200 + `X-PAYMENT-RESPONSE`). Real EIP-3009 verification is implemented: the `X-PAYMENT` authorization's EIP-712 signature is recovered and checked against payTo/amount/time window, then (when configured) settled on-chain via `transferWithAuthorization`, returning a tx hash. |
 | **Agent Skills** | `skill/SKILL.md` | Packaged, installable skill that wraps the full agent loop — discover fixtures → hit paywall → pay → consume — over the MCP tools + x402 gateway, with the exact handshake shapes in `skill/references/x402.md`. |
-| **CCTP** | roadmap | Funding path for agent wallets (USDC into Injective testnet, domain 29) — deliberately out of scope to keep the product small and honest. |
-| **Injective integration** | x402 `network: eip155:1439` | Payment contract targets Injective EVM testnet; on-chain settlement via relayer is the production path. |
+| **CCTP** | `scripts/fund-agent.ts` (`npm run fund`) | Agent-wallet funding: `depositForBurn` of USDC into Injective (CCTP domain 29), the on-ramp for autonomous wallets that pay the x402 calls. |
+| **Injective integration** | x402 `network: eip155:1439`, `src/x402.ts` | Payment contract + on-chain settlement target Injective EVM testnet; a relayer submits the EIP-3009 authorization and pays gas. |
+
+### Payment modes (auto-selected from env)
+| Mode | Enabled by | Behavior |
+|---|---|---|
+| `demo` | *(default, no config)* | Accepts the handshake, issues a signed token. Zero-config for judges. |
+| `verify` | `USDC_ADDRESS` | Cryptographically verifies the EIP-3009 signature, recipient, amount, and validity window. |
+| `settle` | `+ RPC_URL`, `RELAYER_PRIVATE_KEY` | Also submits `transferWithAuthorization` on Injective EVM testnet and returns the tx hash. |
+
+Payment tokens are **HMAC-signed** (`src/token.ts`), so the MCP premium tool
+validates a token was issued by the gateway for that match — not just any
+non-empty string. `GET /health` reports the active mode.
 
 ## World Cup data
 Free, no-auth live API (worldcup26.ir) fetched at call time — optional
@@ -40,7 +51,10 @@ npm install
 npm start          # HTTP gateway + landing on :8791
 npm run mcp        # MCP server on stdio (for Claude Desktop / Cursor)
 npm run smoke      # with the gateway running: PASS/FAIL the free -> 402 -> paid flow
+npm run fund       # CCTP: fund an agent wallet with USDC into Injective (needs env)
 ```
+Runs zero-config in demo mode. To enable real EIP-3009 verification / on-chain
+settlement, set the payment vars in `.env` (see `.env.example`).
 Claude Desktop config:
 ```json
 { "mcpServers": { "sideline": { "command": "npx", "args": ["tsx", "src/mcp.ts"], "cwd": "/path/to/sideline" } } }
@@ -57,7 +71,12 @@ Claude Desktop config:
    gateway → passes the token → unlocked. An AI autonomously paying for data.
 
 ## Honest notes
-- Payment verification accepts the handshake and issues a token in demo
-  mode; production submits the EIP-3009 authorization to an on-chain relayer
-  before serving (marked in code).
-- Data source is community-run; API-Football is the production upgrade path.
+- The x402 verification path is real code (`src/x402.ts`): EIP-3009 signature
+  recovery + payTo/amount/window checks, and a relayer that submits
+  `transferWithAuthorization` on Injective EVM testnet. It ships **demo mode by
+  default** (zero-config for judges); set `USDC_ADDRESS` for verification and
+  `RPC_URL` + `RELAYER_PRIVATE_KEY` for on-chain settlement.
+- Data source is community-run (worldcup26.ir); API-Football is the drop-in
+  production upgrade (`APIFOOTBALL_KEY`).
+- CCTP funding (`scripts/fund-agent.ts`) does the `depositForBurn`; the Circle
+  attestation + destination mint are the standard follow-up steps.

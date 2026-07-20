@@ -1,17 +1,19 @@
 {
   "name": "sideline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Live World Cup data for AIs, agents, and developers - no API keys, ever. MCP server + x402-metered HTTP.",
   "scripts": {
     "start": "tsx src/server.ts",
     "mcp": "tsx src/mcp.ts",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "fund": "tsx scripts/fund-agent.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "axios": "^1.7.0",
     "dotenv": "^16.4.0",
+    "ethers": "^6.13.0",
     "express": "^4.19.0",
     "zod": "^3.23.0"
   },
