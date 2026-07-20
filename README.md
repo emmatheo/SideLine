@@ -25,7 +25,7 @@ match. Agents can't even fill in the signup form.
 |---|---|---|
 | **MCP Server** | `src/mcp.ts` | **Core product.** A real Model Context Protocol server (official TypeScript SDK, stdio transport) exposing 4 live tools any AI can call. The premium tool returns the x402 payment contract when unpaid — agents learn to pay. |
 | **x402** | `src/server.ts` `/premium/brief/:id` | **The business model.** Full 402 handshake in spec shape: unpaid → 402 + `accepts[]` (scheme, asset USDC, amount, payTo, resource); paid → 200 + `X-PAYMENT-RESPONSE`. Facilitator/relayer settlement is the marked integration point; payment tokens bridge HTTP payments to MCP tool calls. |
-| **Agent Skills** | flow design | The MCP premium tool + HTTP gateway together form the agent loop: discover fixtures → hit paywall → pay → consume. A packaged skill wrapper is the first roadmap item. |
+| **Agent Skills** | `skill/SKILL.md` | Packaged, installable skill that wraps the full agent loop — discover fixtures → hit paywall → pay → consume — over the MCP tools + x402 gateway, with the exact handshake shapes in `skill/references/x402.md`. |
 | **CCTP** | roadmap | Funding path for agent wallets (USDC into Injective testnet, domain 29) — deliberately out of scope to keep the product small and honest. |
 | **Injective integration** | x402 `network: eip155:1439` | Payment contract targets Injective EVM testnet; on-chain settlement via relayer is the production path. |
 
