@@ -169,6 +169,7 @@ footer{color:var(--mut);font-size:11px;margin-top:36px;line-height:1.8;font-fami
       <a href="#board">Live Board</a>
       <a href="#doors">MCP</a>
       <a href="#console">x402 API</a>
+      <a href="#run">Run</a>
     </div>
     <div class="navr">
       <a class="ghost" href="https://github.com/emmatheo/sideline" target="_blank" rel="noopener">GitHub</a>
@@ -278,6 +279,19 @@ curl -H "X-PAYMENT: &lt;auth&gt;" …/brief/ID  # -> 200</pre>
     </div>
     <div class="walkcap" id="walkcap"></div>
     <div id="out">// click a button — real responses from this server, live</div>
+  </div>
+
+  <h2 id="run">Run it yourself — 2 minutes</h2>
+  <div class="gl door">
+    <p>No keys, no signup — Node 18+ is all you need. Clone, install, start.</p>
+    <pre id="runCmd">git clone https://github.com/emmatheo/sideline
+cd sideline
+npm install
+npm start          # gateway + landing on :8791
+npm run mcp        # MCP server on stdio (Claude Desktop / Cursor)
+npm run smoke      # optional: PASS/FAIL the free → 402 → paid flow</pre>
+    <button class="copy" data-c="runCmd">copy commands</button>
+    <p style="margin-top:12px">Then open <b style="color:var(--txt)">http://localhost:8791</b> and press <b style="color:var(--amber)">▶ Walk me through it</b>. Full recording script in <code>docs/demo-script.md</code>.</p>
   </div>
 
   <footer>SIDELINE · Injective Global Cup · MCP server + x402 pay-per-call on live World Cup data<br>zero accounts · zero keys · zero databases</footer>
