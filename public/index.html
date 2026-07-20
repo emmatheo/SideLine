@@ -336,7 +336,7 @@ npm run smoke      # optional: PASS/FAIL the free → 402 → paid flow</pre>
     <p style="margin-top:12px">Then open <b style="color:var(--txt)">http://localhost:8791</b> and press <b style="color:var(--amber)">▶ Walk me through it</b>. Full recording script in <code>docs/demo-script.md</code>.</p>
   </div>
 
-  <footer>SIDELINE · Injective Global Cup · MCP server + x402 pay-per-call on live World Cup data<br>zero accounts · zero keys · zero databases</footer>
+  <footer>SIDELINE · Injective Global Cup · MCP server + x402 pay-per-call on live World Cup data<br>zero accounts · zero keys · zero databases<br><span id="ver" style="opacity:.55">build v0.2 · animated explainer + on-chain x402 settlement path</span></footer>
 </div>
 
 <script>
@@ -372,7 +372,8 @@ async function run402(){if(!firstId)return log("no match id yet — wait for the
   log(`GET /premium/brief/${firstId}\n<span class="s402">HTTP ${r.status} Payment Required</span> — the price IS the auth\n\n`+esc(JSON.stringify(j,null,2)));}
 async function runPay(){if(!firstId)return log("no match id yet");
   const r=await fetch(`/premium/brief/${firstId}`,{headers:{"X-PAYMENT":"demo-eip3009-authorization"}});const j=await r.json();
-  log(`GET /premium/brief/${firstId}  (X-PAYMENT: &lt;signed auth&gt;)\n<span class="s200">HTTP ${r.status} OK — settled, content unlocked</span>\n\n`+esc(JSON.stringify(j,null,2)));}
+  const mode=j.mode?` · mode=${j.mode}`:"";const tx=j.txHash?`\non-chain tx: ${j.txHash}`:"";
+  log(`GET /premium/brief/${firstId}  (X-PAYMENT: &lt;signed auth&gt;)\n<span class="s200">HTTP ${r.status} OK — content unlocked${mode}</span>${tx}\n\n`+esc(JSON.stringify(j,null,2)));}
 $("#bFree").onclick=runFree;$("#b402").onclick=run402;$("#bPay").onclick=runPay;
 
 /* Guided walkthrough — auto-plays the free -> 402 -> paid story with captions,

@@ -1,0 +1,29 @@
+# Render Blueprint — makes deploys deterministic and auto-deploy on push to main.
+# If your service was created manually, either convert it to this Blueprint or
+# mirror these settings in the dashboard (Branch: main, Auto-Deploy: On,
+# Build: npm install, Start: npm start).
+services:
+  - type: web
+    name: sideline
+    runtime: node
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      # Free/demo mode needs none of these. Set them to turn on real x402
+      # verification + on-chain settlement on Injective EVM testnet.
+      - key: PAY_TO
+        sync: false
+      - key: PRICE_UNITS
+        value: "5000"
+      # - key: USDC_ADDRESS        # set -> verify mode (EIP-3009 signature check)
+      #   sync: false
+      # - key: RPC_URL             # + RELAYER_PRIVATE_KEY -> settle mode
+      #   sync: false
+      # - key: RELAYER_PRIVATE_KEY
+      #   sync: false
+      # - key: TOKEN_SECRET        # shared HMAC secret for HTTP <-> MCP tokens
+      #   sync: false
