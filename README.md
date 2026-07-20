@@ -39,6 +39,7 @@ test, or judge.
 npm install
 npm start          # HTTP gateway + landing on :8791
 npm run mcp        # MCP server on stdio (for Claude Desktop / Cursor)
+npm run smoke      # with the gateway running: PASS/FAIL the free -> 402 -> paid flow
 ```
 Claude Desktop config:
 ```json
